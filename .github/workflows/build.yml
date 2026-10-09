@@ -9,14 +9,25 @@ jobs:
       - name: Checkout Código
         uses: actions/checkout@v4
 
-      - name: Baixar Headers e Libs do Lua 5.5
+      - name: Configurar Dependências do Lua 5.5
+        shell: powershell
         run: |
-          curl -L -o lua.zip "https://sourceforge.net/projects/luabinaries/files/5.4.6/Executables/lua-5.4.6_Win64_bin.zip/download"
-          expand-archive lua.zip -DestinationPath C:\LuaLib
+          New-Item -ItemType Directory -Force -Path C:\LuaLib | Out-Null
+          
+          # Baixa o pacote oficial do LuaBinaries com tratamento de User-Agent
+          $url = "https://downloads.sourceforge.net/project/luabinaries/5.4.6/Executables/lua-5.4.6_Win64_bin.zip"
+          Invoke-WebRequest -Uri $url -OutFile "D:\LuaLib\lua.zip" -UserAgent "Mozilla/5.0"
+          Expand-Archive -Path "D:\LuaLib\lua.zip" -DestinationPath "D:\LuaLib" -Force
+          
+          # Baixa os arquivos de cabeçalho C (lua.h, lauxlib.h, luaconf.h)
+          $includeUrl = "https://downloads.sourceforge.net/project/luabinaries/5.4.6/Includes/lua-5.4.6_Win64_inl.zip"
+          Invoke-WebRequest -Uri $includeUrl -OutFile "D:\LuaLib\include.zip" -UserAgent "Mozilla/5.0"
+          Expand-Archive -Path "D:\LuaLib\include.zip" -DestinationPath "D:\LuaLib\include" -Force
 
       - name: Compilar sysmetrics.dll
+        shell: cmd
         run: |
-          gcc -O2 -shared -o sysmetrics.dll sysmetrics.c -I"C:\LuaLib" -L"C:\LuaLib" -llua54
+          gcc -O2 -shared -o sysmetrics.dll sysmetrics.c -I"D:\LuaLib\include" -L"D:\LuaLib" -llua54
 
       - name: Disponibilizar DLL para Download
         uses: actions/upload-artifact@v4
