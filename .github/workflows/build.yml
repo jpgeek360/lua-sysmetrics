@@ -1,0 +1,25 @@
+name: Build Windows DLL
+
+on: [push, workflow_dispatch]
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout Código
+        uses: actions/checkout@v4
+
+      - name: Baixar Headers e Libs do Lua 5.5
+        run: |
+          curl -L -o lua.zip "https://sourceforge.net/projects/luabinaries/files/5.4.6/Executables/lua-5.4.6_Win64_bin.zip/download"
+          expand-archive lua.zip -DestinationPath C:\LuaLib
+
+      - name: Compilar sysmetrics.dll
+        run: |
+          gcc -O2 -shared -o sysmetrics.dll sysmetrics.c -I"C:\LuaLib" -L"C:\LuaLib" -llua54
+
+      - name: Disponibilizar DLL para Download
+        uses: actions/upload-artifact@v4
+        with:
+          name: sysmetrics-dll
+          path: sysmetrics.dll
