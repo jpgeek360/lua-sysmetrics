@@ -9,19 +9,23 @@ jobs:
       - name: Checkout Código
         uses: actions/checkout@v4
 
-      - name: Configurar Dependências do Lua 5.5
+      - name: Configurar Dependências do Lua 5.5 e Headers
         shell: powershell
         run: |
-          New-Item -ItemType Directory -Force -Path C:\LuaLib | Out-Null
-          
-          # Baixa o pacote oficial do LuaBinaries com tratamento de User-Agent
-          $url = "https://downloads.sourceforge.net/project/luabinaries/5.4.6/Executables/lua-5.4.6_Win64_bin.zip"
-          Invoke-WebRequest -Uri $url -OutFile "D:\LuaLib\lua.zip" -UserAgent "Mozilla/5.0"
+          # 1. Garante o protocolo TLS 1.2 para conexões de rede seguras
+          [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+
+          # 2. Cria a estrutura de diretorias necessária
+          New-Item -ItemType Directory -Force -Path "D:\LuaLib\include" | Out-Null
+
+          # 3. Baixa e extrai o Runtime dos Binários Oficiais do Lua
+          $binUrl = "https://downloads.sourceforge.net/project/luabinaries/5.4.6/Executables/lua-5.4.6_Win64_bin.zip"
+          Invoke-WebRequest -Uri $binUrl -OutFile "D:\LuaLib\lua.zip" -UserAgent "Mozilla/5.0"
           Expand-Archive -Path "D:\LuaLib\lua.zip" -DestinationPath "D:\LuaLib" -Force
-          
-          # Baixa os arquivos de cabeçalho C (lua.h, lauxlib.h, luaconf.h)
-          $includeUrl = "https://downloads.sourceforge.net/project/luabinaries/5.4.6/Includes/lua-5.4.6_Win64_inl.zip"
-          Invoke-WebRequest -Uri $includeUrl -OutFile "D:\LuaLib\include.zip" -UserAgent "Mozilla/5.0"
+
+          # 4. Baixa e extrai os Ficheiros de Cabeçalho C (lua.h, lauxlib.h, luaconf.h)
+          $incUrl = "https://downloads.sourceforge.net/project/luabinaries/5.4.6/Includes/lua-5.4.6_Win64_inl.zip"
+          Invoke-WebRequest -Uri $incUrl -OutFile "D:\LuaLib\include.zip" -UserAgent "Mozilla/5.0"
           Expand-Archive -Path "D:\LuaLib\include.zip" -DestinationPath "D:\LuaLib\include" -Force
 
       - name: Compilar sysmetrics.dll
